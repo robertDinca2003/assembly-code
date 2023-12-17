@@ -25,10 +25,59 @@ init_urmator_pas:
     popl %edi
     popl %esi
 
-        
+    movl $0, %ebx
+    movl $0, %ecx
+    addl $1, rowSize
+    addl $1, colSize
 
-    pushl %edi
+    for_loop_i_pas:
+    cmp %ebx, rowSize
+    je for_loop_i_pas_exit
+        mov $0, %ecx
+        for_loop_j_pas:
+        cmp %ecx, colSize
+        je for_loop_j_pas_exit
+        movl rowSize, %eax
+        imull %ebx
+        addl %ecx, %eax
+        mov $0, (%esi,%eax,4)
+        incl %ecx
+        jmp for_loop_j_pas
+        for_loop_j_pas_exit
+    incl %ebx
+    jmp for_loop_i_pas
+    for_loop_i_pas_exit
+
+    movl $1, %ebx
+    movl $1, %ecx
+    subl $1, rowSize
+    subl $1, colSize
+
+    for_loop_i_init:
+    cmp %ebx, rowSize
+    je for_loop_i_init_exit
+
+        mov $1, %ecx
+        for_loop_j_init:
+        cmp %ecx, colSize
+        je for_loop_j_exit
+
+        movl %ebx, %eax
+        imull rowSize
+        addl %ecx, %eax
+
+        mov  (%edi, %eax, 4), %edx
+        mov %edx, (%esi, %eax, 4)
+
+        incl %ecx
+        jmp for_loop_j_init
+        for_loop_j_init_exit
+    incl %ebx
+    jmp for_loop_i_init
+    for_loop_i_init_exit:
+
     pushl %esi
+    pushl %edi
 
 ret
 
@@ -58,72 +107,142 @@ calcul_pas:
 
             
             movl $1, %ecx
-            cmp %ecx, -4(%edi, %eax,4)
+            cmp %ecx, -4(%esi, %eax,4)
             jne next1
             incl %edx
             next1:
 
-            cmp %ecx, 4(%edi, %eax,4)
+            cmp %ecx, 4(%esi, %eax,4)
             jne next2
             incl %edx
             next2:
 
             subl rowSize, %eax
-            cmp %ecx, (%edi, %eax,4)
+            cmp %ecx, (%esi, %eax,4)
             jne next3
             incl %edx
             next3:
 
             addl rowSize, %eax
             addl rowSize, %eax
-            cmp %ecx, (%edi, %eax,4)
+            cmp %ecx, (%esi, %eax,4)
             jne next4
             incl %edx
             next4:
             subl rowSize, %eax
 
-            movl (%edi,%eax,4), %ebx
+            movl (%esi,%eax,4), %ebx
             cmp %ebx, %ecx
             je is_one
             // zero
             cmp %edx, val_three
             jne nnnext:
 
-            movl $1, (%esi, %eax, 4)
+            movl $1, (%edi, %eax, 4)
 
             jmp for_end
             nnnext:
 
-            movl $0, (%esi, %eax, 4)
+            movl $0, (%edi, %eax, 4)
 
             jmp for_end
             is_one:
             // one
             cmp %edx,val_two
             jge nnext1
-            movl $0, (%esi, %eax, 4)
+            movl $0, (%edi, %eax, 4)
             jmp for_end
             nnext1:
 
             cmp %edx,val_four
             jge nnext2
-            movl $1, (%esi, %eax, 4)
+            movl $1, (%edi, %eax, 4)
             jmp for_end
             nnext2:
 
-            movl $0, (%esi, %eax, 4)
+            movl $0, (%edi, %eax, 4)
 
             for_end:
             popl %ecx
             popl %ebx
-
+            incl %ecx
         jmp for_loop_j
         for_loop_j_exit:
+    incl %ebx
     jmp for_loop_i
     for_loop_i_exit:
     
     pushl %esi
     pushl %edi
+
+ret
+
+afisare_matrice:
+
+popl %esi
+
+movl $1, %ebx
+movl $1, %ecx
+
+for_loop_i_print:
+cmp %ebx, rowSize
+je for_loop_i_print_exit
+    mov $1, %ecx
+    for_loop_j_print:
+    cmp %ecx, colSize
+    je for_loop_j_print_exit
+
+    //cod de afisare
+    mov %ebx, %eax
+    imull rowSize
+    addl %ecx, %eax
+
+    pushl %eax
+    pushl %ecx
+    
+    pushl (%esi, %eax, 4 )
+    pushl $texPrintf
+
+    call printf
+
+    popl %edx
+    popl %edx
+
+    popl %ecx
+    popl %eax
+
+    pushl %eax
+    pushl %ecx
+
+    pushl $0
+
+    call fflush
+
+    popl %edx
+    popl %ecx
+    popl %eax
+
+    incl %ecx
+    jmp for_loop_j_print
+    for_loop_j_print_exit:
+
+// cod new line
+
+pushl %ecx
+pushl %eax
+pushl $newLine
+
+call printf
+
+popl %edx
+popl %eax
+popl %ecx
+
+incl %ebx
+jmp for_loop_i_print
+for_loop_i_print_exit:
+
+pushl %esi
 
 ret
 
@@ -202,7 +321,7 @@ citire_input:
 mov $0, %ebx
 procesare_pasi:
     cmp %ebx, k
-    je procesare_pasi_eixt
+    je procesare_pasi_exit
 
     pushl %esi
     pushl %edi
@@ -222,7 +341,15 @@ procesare_pasi:
 
 
 jmp procesare_pasi
-procesare_pasi_eixt:
+procesare_pasi_exit:
+
+afisare_rezultat:
+
+pushl %esi
+
+call afisare_matrice
+
+popl %esi
 
 exit:
     mov $1 , %eax
